@@ -100,20 +100,59 @@ class ActiveQuery extends \yii\db\ActiveQuery {
             return null;
         }
         $result = [];
-
         foreach ($where as $uKey => $value) {
-            $result[] = [
-                'fieldName' => $uKey,
-                'op'        => 3,
-                'value'     => $value == 0 ? "0" : strval($value),
-            ];
+            if (!is_array($value)) {
+                continue;
+            }
+            $whereItemCount = count($value);
+            if (3 == $whereItemCount && ($op = $this->getOp($value[0]))) {
+                $this->makdeCondtion($value[1], $value[2], $this->getOp($value[0]), $result);
+            } elseif (is_array($value)) {
+                foreach ($value as $k => $v) {
+                    $this->makdeCondtion($k, $v, $this->getOp('='), $result);
+                }
+            }
         }
-        $result[] = [
-            'fieldName' => 'limit',
-            'op'        => 9,
-            'value'     => "{$start}:{$end}",
-        ];
+        $limitFlag = sprintf("%d:%d", $start, $end);
+        $this->makdeCondtion('limit', $limitFlag, $this->getOp('limit'), $result);
         return $result;
+    }
+
+    private function makdeCondtion($field, $val, $op, &$result) {
+        $result[] = [
+            'fieldName' => $field,
+            'op'        => $op,
+            'value'     => $val === 0 ? "0" : strval($val),
+        ];
+    }
+
+    private function getOp($val) {
+        $rsp = null;
+        switch ($val){
+            case "=":
+            case "==":
+                $rsp = 3;
+                break;
+            case "!=":
+                $rsp = 4;
+                break;
+            case ">":
+                $rsp = 5;
+                break;
+            case "<":
+                $rsp = 6;
+                break;
+            case "<=":
+                $rsp = 7;
+                break;
+            case ">=":
+                $rsp = 8;
+                break;
+            case "limit":
+                $rsp = 9;
+                break;
+        }
+        return $rsp;
     }
 
     private function getHeader() {
