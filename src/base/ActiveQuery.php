@@ -101,16 +101,20 @@ class ActiveQuery extends \yii\db\ActiveQuery {
         }
         $result = [];
         foreach ($where as $uKey => $value) {
-            if (!is_array($value)) {
-                continue;
-            }
-            $whereItemCount = count($value);
-            if (3 == $whereItemCount && ($op = $this->getOp($value[0]))) {
-                $this->makdeCondtion($value[1], $value[2], $this->getOp($value[0]), $result);
-            } elseif (is_array($value)) {
-                foreach ($value as $k => $v) {
-                    $this->makdeCondtion($k, $v, $this->getOp('='), $result);
+            if (is_int($uKey)){
+                if (!is_array($value)) {
+                    continue;
                 }
+                $whereItemCount = count($value);
+                if (3 == $whereItemCount && isset($value[0]) && is_scalar($value[0]) && ($op = $this->getOp($value[0]))) {
+                    $this->makdeCondtion($value[1], $value[2], $this->getOp($value[0]), $result);
+                } elseif (is_array($value)) {
+                    foreach ($value as $k => $v) {
+                        $this->makdeCondtion($k, $v, $this->getOp('='), $result);
+                    }
+                }
+            } elseif(is_scalar($value)) {
+                $this->makdeCondtion($uKey, $value, $this->getOp('='), $result);
             }
         }
         $limitFlag = sprintf("%d:%d", $start, $end);
